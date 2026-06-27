@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Set Poppins as the default sans-serif font */
+  --font-sans: "Poppins", sans-serif;
+
+  /* Your CookNest App Color Palette */
+  --color-background: #FFFDF8;
+  --color-surface: #FFFFFF;
+  --color-primary: #F97316;
+  --color-secondary: #F59E0B;
+  --color-accent: #84CC16;
+  --color-text: #1F2937;
+  --color-muted: #6B7280;
+  --color-border: #E5E7EB;
+}
