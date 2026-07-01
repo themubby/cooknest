@@ -163,7 +163,7 @@ export default function ManageRecipesPage() {
         <>
           {filteredRecipes.length === 0 && (
             <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-[2rem]">
-              <p className="text-sm font-bold text-gray-400">No personal recipes found matching "{currentSearchQuery}"</p>
+              <p className="text-sm font-bold text-gray-400">No personal recipes found "{currentSearchQuery}"</p>
             </div>
           )}
 
@@ -211,7 +211,7 @@ export default function ManageRecipesPage() {
 
       {/* DYNAMIC DETAIL MODAL */}
       {selectedRecipe && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4" onClick={() => setSelectedRecipe(null)}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4" onClick={() => setSelectedRecipe(null)}>
           <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-start">
               <div className="space-y-1">
