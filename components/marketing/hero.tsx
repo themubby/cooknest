@@ -20,17 +20,12 @@ export default function Hero() {
         {/* Core CTA Buttons (Matches Section 1 Design) */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
           <a 
-            href="/recipes" 
+            href="/dashboard/add-recipe" 
             className="w-full sm:w-auto bg-primary text-white text-center font-semibold px-8 py-3.5 rounded-full hover:bg-opacity-90 shadow-md shadow-primary/10 transition-all"
           >
-            Explore Recipes
+            Add your Recipe
           </a>
-          <a 
-            href="/dashboard/add-recipe" 
-            className="w-full sm:w-auto bg-white text-text text-center font-semibold px-8 py-3.5 rounded-full border border-border hover:bg-background transition-all"
-          >
-            Add Your Recipe
-          </a>
+          
         </div>
       </div>
 

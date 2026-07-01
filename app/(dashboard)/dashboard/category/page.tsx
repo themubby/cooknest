@@ -34,7 +34,7 @@ export default function CategoryPage() {
   const fetchRecipes = async () => {
     setIsLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, "recipes"));
+      const querySnapshot = await getDocs(collection(db, "recipe"));
       const fetchedRecipes: Recipe[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
@@ -56,15 +56,16 @@ export default function CategoryPage() {
     }
   };
 
+  // Automatically re-fetches whenever the user changes category filter tabs
   useEffect(() => {
     fetchRecipes();
-  }, []);
+  }, [activeFilter]);
 
   // INLINE DELETE OPERATION
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to permanently delete this recipe from your collection?")) return;
     try {
-      await deleteDoc(doc(db, "recipes", id));
+      await deleteDoc(doc(db, "recipe", id));
       setRecipes(prev => prev.filter(recipe => recipe.id !== id));
     } catch (error) {
       console.error("Error deleting document:", error);
@@ -85,7 +86,7 @@ export default function CategoryPage() {
       if (!editingRecipe) return;
       setIsSaving(true);
       try {
-        const docRef = doc(db, "recipes", editingRecipe.id);
+        const docRef = doc(db, "recipe", editingRecipe.id);
         const updatedData = {
           title: values.title,
           duration: values.duration,
@@ -150,21 +151,21 @@ export default function CategoryPage() {
         <div className="text-center py-12 text-sm font-bold text-gray-400">Loading your recipes...</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRecipes.map((recipe) => (
-            <div key={recipe.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[2rem] overflow-hidden shadow-sm flex flex-col group relative">
+          {filteredRecipes.map((recipeItem) => (
+            <div key={recipeItem.id} className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[2rem] overflow-hidden shadow-sm flex flex-col group relative">
               <div className="relative aspect-square w-full bg-gray-50 dark:bg-gray-950">
-                <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
+                <img src={recipeItem.image} alt={recipeItem.title} className="w-full h-full object-cover" />
                 
                 {/* ACTION LAYER OVERLAY ON HOVER */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
                   <button 
-                    onClick={() => startEdit(recipe)}
+                    onClick={() => startEdit(recipeItem)}
                     className="p-3 bg-white hover:bg-orange-500 text-gray-900 hover:text-white rounded-full font-bold text-xs transition-colors shadow-lg cursor-pointer"
                   >
                     ✏️ Edit
                   </button>
                   <button 
-                    onClick={() => handleDelete(recipe.id)}
+                    onClick={() => handleDelete(recipeItem.id)}
                     className="p-3 bg-white hover:bg-red-600 text-gray-900 hover:text-white rounded-full font-bold text-xs transition-colors shadow-lg cursor-pointer"
                   >
                     🗑️ Delete
@@ -172,10 +173,10 @@ export default function CategoryPage() {
                 </div>
               </div>
               <div className="p-5 flex-1 flex flex-col justify-between gap-2">
-                <h3 className="font-extrabold text-gray-900 dark:text-white text-sm">{recipe.title}</h3>
+                <h3 className="font-extrabold text-gray-900 dark:text-white text-sm">{recipeItem.title}</h3>
                 <div className="flex items-center justify-between text-xs font-bold text-gray-400">
-                  <span>⏱️ {recipe.duration}</span>
-                  <span className="text-orange-500">★ {recipe.rating}</span>
+                  <span>⏱️ {recipeItem.duration}</span>
+                  <span className="text-orange-500">★ {recipeItem.rating}</span>
                 </div>
               </div>
             </div>
