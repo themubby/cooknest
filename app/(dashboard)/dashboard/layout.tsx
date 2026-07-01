@@ -1,4 +1,3 @@
-// app/dashboard/layout.tsx
 import React from 'react';
 import Navbar from '@/components/marketing/navbar';
 import SidebarNav from '@/components/dashboard/sidebar-nav';
@@ -17,16 +16,24 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  // 📦 Format a safe user object to satisfy Navbar's required properties
+  const safeUser = {
+    name: session.user.name || 'CookNest Chef',
+    email: session.user.email || '',
+    image: session.user.image || undefined,
+  };
+
   return (
     <Providers>
       <div className="min-h-screen bg-[#FAFAFA] dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans transition-colors duration-200">
-        {/* Top Main Navbar */}
-        <Navbar />
+        
+        {/* ⚡ FIXED: Passing the safe user data right here */}
+        <Navbar user={safeUser} />
 
         {/* Updated parent wrapper to handle padding correctly on mobile vs desktop */}
         <div className="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6 pb-28 md:pb-6">
 
-          {/* 🖥️ DESKTOP LEFT PANEL: PERSISTENT DASHBOARD SIDEBAR (Unchanged structure) */}
+          {/* 🖥️ DESKTOP LEFT PANEL: PERSISTENT DASHBOARD SIDEBAR */}
           <aside className="w-64 hidden md:flex flex-col bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm h-[calc(100vh-7.5rem)] sticky top-24 justify-between">
 
             <div className="space-y-7">
@@ -78,7 +85,7 @@ export default async function DashboardLayout({
 
         </div>
 
-        {/* 📱 MOBILE BOTTOM NAVIGATION FIXED DOCK (Visible ONLY below md tailwind breakpoint) */}
+        {/* 📱 MOBILE BOTTOM NAVIGATION FIXED DOCK */}
         <nav className="md:hidden fixed bottom-4 inset-x-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-gray-100 dark:border-gray-800 px-3 py-2.5 rounded-4xl flex justify-around items-center z-40 shadow-lg shadow-gray-200/50 dark:shadow-none">
           <SidebarNav isMobileHorizontal={true} />
         </nav>

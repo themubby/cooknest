@@ -14,7 +14,10 @@ interface Recipe {
   category: string;
   rating: number;
   ingredients: string[];
+  procedure: string[]; // 👈 Array to hold step-by-step instructions
   createdBy: string;
+  authorName?: string;
+  isPublic: boolean;
 }
 
 export default function ManageRecipesPage() {
@@ -50,7 +53,10 @@ export default function ManageRecipesPage() {
           category: data.category || '',
           rating: data.rating || 5.0,
           ingredients: data.ingredients || [],
-          createdBy: data.createdBy || 'anonymous'
+          procedure: data.procedure || [], // 👈 Map incoming database procedure array
+          createdBy: data.createdBy || 'anonymous',
+          authorName: data.authorName || 'CookNest Chef',
+          isPublic: data.isPublic ?? true
         });
       });
       setRecipes(fetched);
@@ -71,6 +77,7 @@ export default function ManageRecipesPage() {
       duration: editingRecipe?.duration || '',
       category: editingRecipe?.category || 'Breakfast',
       ingredients: editingRecipe?.ingredients.join('\n') || '',
+      procedure: editingRecipe?.procedure.join('\n') || '', // 👈 Turn array back into text lines for editing
     },
     enableReinitialize: true,
     onSubmit: async (values, { resetForm }) => {
@@ -79,8 +86,12 @@ export default function ManageRecipesPage() {
         duration: values.duration,
         category: values.category,
         ingredients: values.ingredients.split('\n').filter(i => i.trim() !== ''),
+        // 🔽 Splits raw text line-by-line into a clean array structure for storage
+        procedure: values.procedure.split('\n').filter(p => p.trim() !== ''),
         rating: editingRecipe?.rating || 5.0,
         createdBy: session?.user?.email || "anonymous",
+        authorName: session?.user?.name || "CookNest Chef",
+        isPublic: true, // Automatically visible in explore feed
         updatedAt: serverTimestamp()
       };
 
@@ -134,7 +145,6 @@ export default function ManageRecipesPage() {
         <div className="text-center py-12 font-bold text-gray-400">Loading master files...</div>
       ) : (
         <>
-          {/* FALLBACK INFO PANEL IF SEARCH IS EMPTY */}
           {filteredRecipes.length === 0 && (
             <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-[2rem]">
               <p className="text-sm font-bold text-gray-400">No matching recipes found for "{currentSearchQuery}"</p>
@@ -142,7 +152,6 @@ export default function ManageRecipesPage() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* 🔥 CONNECTED: Now rendering filteredRecipes loop instead of the stagnant base list */}
             {filteredRecipes.map((item) => (
               <div
                 key={item.id}
@@ -150,7 +159,10 @@ export default function ManageRecipesPage() {
                 className="p-5 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-4xl shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group relative"
               >
                 <div className="space-y-2">
-                  <span className="px-3 py-1 bg-orange-50 dark:bg-orange-950/30 text-orange-500 rounded-full text-[10px] font-black uppercase tracking-wider">{item.category}</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="px-3 py-1 bg-orange-50 dark:bg-orange-950/30 text-orange-500 rounded-full text-[10px] font-black uppercase tracking-wider">{item.category}</span>
+                    <span className="text-[10px] bg-green-50 dark:bg-green-950/30 text-green-600 font-bold px-2 py-0.5 rounded-md">🌐 Public</span>
+                  </div>
                   <h3 className="font-extrabold text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors pt-1">{item.title}</h3>
                   <div className="flex items-center gap-4 text-xs font-bold text-gray-400">
                     <span>⏱️ {item.duration}</span>
@@ -158,7 +170,6 @@ export default function ManageRecipesPage() {
                   </div>
                 </div>
 
-                {/* FLOATING ADMIN TOOLBAR */}
                 <div className="flex justify-end gap-2 pt-4 border-t border-gray-50 dark:border-gray-800/50 mt-4">
                   <button
                     onClick={(e) => { e.stopPropagation(); setEditingRecipe(item); setIsFormOpen(true); }}
@@ -179,10 +190,10 @@ export default function ManageRecipesPage() {
         </>
       )}
 
-      {/* DYNAMIC DETAIL MODAL */}
+      {/* DYNAMIC DETAIL MODAL (Showing Ingredients & Instructions Side-by-Side) */}
       {selectedRecipe && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4" onClick={() => setSelectedRecipe(null)}>
-          <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <span className="text-[10px] font-black tracking-widest text-orange-500 uppercase">{selectedRecipe.category}</span>
@@ -196,15 +207,37 @@ export default function ManageRecipesPage() {
               <div>Rating Score: <span className="text-orange-500 ml-1">★ {selectedRecipe.rating || 5.0}</span></div>
             </div>
 
+            {/* List Ingredients */}
             <div className="space-y-3">
-              <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Ingredients Blueprint</h4>
-              <ul className="space-y-2">
+              <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Ingredients</h4>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {selectedRecipe.ingredients.map((ingredient, index) => (
-                  <li key={index} className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-950 px-4 py-2.5 rounded-xl">
+                  <li key={index} className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-950 px-4 py-2 rounded-xl">
                     <span className="text-orange-500 text-xs">🔹</span> {ingredient}
                   </li>
                 ))}
               </ul>
+            </div>
+
+            {/* 🛠️ NEW: List Step-by-Step Instructions */}
+            <div className="space-y-3 pt-2">
+              <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Step-by-Step Instructions</h4>
+              {selectedRecipe.procedure && selectedRecipe.procedure.length > 0 ? (
+                <ol className="space-y-3">
+                  {selectedRecipe.procedure.map((step, index) => (
+                    <li key={index} className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-950 border border-gray-100/55 dark:border-gray-800/40">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white text-xs font-black">
+                        {index + 1}
+                      </span>
+                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 leading-relaxed pt-0.5">
+                        {step}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="text-xs font-bold text-gray-400 italic">No preparation steps specified for this recipe.</p>
+              )}
             </div>
 
             <div className="text-[10px] text-gray-400 font-mono">Created by: {selectedRecipe.createdBy}</div>
@@ -228,8 +261,26 @@ export default function ManageRecipesPage() {
                   <option value="Desserts">Desserts</option>
                 </select>
               </div>
-              <textarea name="ingredients" rows={5} placeholder="Ingredients (one per line)" onChange={formik.handleChange} value={formik.values.ingredients} className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold resize-none text-gray-900 dark:text-white" />
-              <div className="flex justify-end gap-3">
+              
+              <div>
+                <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 px-1">Ingredients (one per line)</label>
+                <textarea name="ingredients" rows={4} placeholder="e.g., 3.5 cups Flour&#10;1 tsp Yeast" onChange={formik.handleChange} value={formik.values.ingredients} className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold resize-none text-gray-900 dark:text-white" />
+              </div>
+
+              {/* 🛠️ NEW: STEP-BY-STEP INSTRUCTIONS ENTRY WORKSPACE */}
+              <div>
+                <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 px-1">Step-by-Step Instructions (one step per line)</label>
+                <textarea 
+                  name="procedure" 
+                  rows={5} 
+                  placeholder="e.g., Mix dry ingredients in a large bowl.&#10;Cover tightly and rise for 3 hours." 
+                  onChange={formik.handleChange} 
+                  value={formik.values.procedure} 
+                  className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold resize-none text-gray-900 dark:text-white focus:outline-none focus:border-orange-500 transition-colors" 
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setIsFormOpen(false)} className="px-5 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-full font-bold text-xs text-gray-500 cursor-pointer">Cancel</button>
                 <button type="submit" className="px-6 py-2.5 bg-orange-500 text-white rounded-full font-bold text-xs cursor-pointer hover:bg-orange-600">Save</button>
               </div>
