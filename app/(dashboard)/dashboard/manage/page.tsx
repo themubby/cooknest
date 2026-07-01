@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { useFormik } from 'formik';
 import { useSession } from 'next-auth/react';
@@ -14,7 +14,7 @@ interface Recipe {
   category: string;
   rating: number;
   ingredients: string[];
-  procedure: string[]; // 👈 Array to hold step-by-step instructions
+  procedure: string[];
   createdBy: string;
   authorName?: string;
   isPublic: boolean;
@@ -34,15 +34,20 @@ export default function ManageRecipesPage() {
   const searchParams = useSearchParams();
   const currentSearchQuery = searchParams.get("search")?.toLowerCase() || "";
 
-  // ⚡ DYNAMICALLY FILTER ARRAYS ON THE FLY
+  // ⚡ DYNAMICALLY FILTER ONLY USER RECIPES ON THE FLY
   const filteredRecipes = recipes.filter(recipe => 
     recipe.title.toLowerCase().includes(currentSearchQuery)
   );
 
   const fetchRecipes = async () => {
+    if (!session?.user?.email) return;
     setIsLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, "recipe"));
+      // 🔐 OPTIMIZED FIRESTORE QUERY: Only download documents matching this signed-in user
+      const recipeRef = collection(db, "recipe");
+      const q = query(recipeRef, where("createdBy", "==", session.user.email));
+      const querySnapshot = await getDocs(q);
+      
       const fetched: Recipe[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
@@ -53,23 +58,27 @@ export default function ManageRecipesPage() {
           category: data.category || '',
           rating: data.rating || 5.0,
           ingredients: data.ingredients || [],
-          procedure: data.procedure || [], // 👈 Map incoming database procedure array
+          procedure: data.procedure || [],
           createdBy: data.createdBy || 'anonymous',
           authorName: data.authorName || 'CookNest Chef',
           isPublic: data.isPublic ?? true
         });
       });
+      
       setRecipes(fetched);
     } catch (error) {
-      console.error("Error fetching recipes:", error);
+      console.error("Error fetching private workspace recipes:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Re-run whenever the session updates to ensure emails are populated safely
   useEffect(() => {
-    fetchRecipes();
-  }, []);
+    if (session?.user?.email) {
+      fetchRecipes();
+    }
+  }, [session]);
 
   const formik = useFormik({
     initialValues: {
@@ -77,7 +86,7 @@ export default function ManageRecipesPage() {
       duration: editingRecipe?.duration || '',
       category: editingRecipe?.category || 'Breakfast',
       ingredients: editingRecipe?.ingredients.join('\n') || '',
-      procedure: editingRecipe?.procedure.join('\n') || '', // 👈 Turn array back into text lines for editing
+      procedure: editingRecipe?.procedure.join('\n') || '',
     },
     enableReinitialize: true,
     onSubmit: async (values, { resetForm }) => {
@@ -86,12 +95,11 @@ export default function ManageRecipesPage() {
         duration: values.duration,
         category: values.category,
         ingredients: values.ingredients.split('\n').filter(i => i.trim() !== ''),
-        // 🔽 Splits raw text line-by-line into a clean array structure for storage
         procedure: values.procedure.split('\n').filter(p => p.trim() !== ''),
         rating: editingRecipe?.rating || 5.0,
         createdBy: session?.user?.email || "anonymous",
         authorName: session?.user?.name || "CookNest Chef",
-        isPublic: true, // Automatically visible in explore feed
+        isPublic: true, // Remains public on feed but managed strictly here
         updatedAt: serverTimestamp()
       };
 
@@ -113,7 +121,7 @@ export default function ManageRecipesPage() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Permanently delete this recipe?")) return;
+    if (!confirm("Permanently delete this recipe from your workspace?")) return;
     try {
       await deleteDoc(doc(db, "recipe", id));
       setRecipes(prev => prev.filter(r => r.id !== id));
@@ -123,20 +131,28 @@ export default function ManageRecipesPage() {
     }
   };
 
+  if (!session) {
+    return (
+      <div className="text-center py-24 border border-dashed border-gray-200 dark:border-gray-800 rounded-[2rem] max-w-xl mx-auto">
+        <p className="text-sm font-bold text-gray-400">Please sign in to access your private kitchen workspace.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 max-w-6xl mx-auto w-full">
       
       {/* HEADER CONTROLLER SECTION */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-b border-gray-100 dark:border-gray-800 pb-5">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">Manage Recipes</h1>
-          <p className="text-xs font-bold text-gray-400 mt-1">Add, view details, update, or remove kitchen documents.</p>
+          <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">My Workspace</h1>
+          <p className="text-xs font-bold text-gray-400 mt-1">Your private laboratory. Only recipes created by you appear here.</p>
         </div>
         <button
           onClick={() => { setEditingRecipe(null); setIsFormOpen(true); }}
           className="w-full sm:w-auto px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs rounded-full shadow-md transition-all cursor-pointer text-center shrink-0"
         >
-          ➕ Add New Recipe
+          ➕ Add Private Recipe
         </button>
       </div>
 
@@ -147,7 +163,7 @@ export default function ManageRecipesPage() {
         <>
           {filteredRecipes.length === 0 && (
             <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-[2rem]">
-              <p className="text-sm font-bold text-gray-400">No matching recipes found for "{currentSearchQuery}"</p>
+              <p className="text-sm font-bold text-gray-400">No personal recipes found matching "{currentSearchQuery}"</p>
             </div>
           )}
 
@@ -161,7 +177,9 @@ export default function ManageRecipesPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <span className="px-3 py-1 bg-orange-50 dark:bg-orange-950/30 text-orange-500 rounded-full text-[10px] font-black uppercase tracking-wider">{item.category}</span>
-                    <span className="text-[10px] bg-green-50 dark:bg-green-950/30 text-green-600 font-bold px-2 py-0.5 rounded-md">🌐 Public</span>
+                    <span className="text-[10px] bg-green-50 dark:bg-green-950/30 text-green-600 font-bold px-2 py-0.5 rounded-md">
+                      {item.isPublic ? "🌐 Public Feed" : "🔒 Private"}
+                    </span>
                   </div>
                   <h3 className="font-extrabold text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors pt-1">{item.title}</h3>
                   <div className="flex items-center gap-4 text-xs font-bold text-gray-400">
@@ -170,6 +188,7 @@ export default function ManageRecipesPage() {
                   </div>
                 </div>
 
+                {/* Private management access only */}
                 <div className="flex justify-end gap-2 pt-4 border-t border-gray-50 dark:border-gray-800/50 mt-4">
                   <button
                     onClick={(e) => { e.stopPropagation(); setEditingRecipe(item); setIsFormOpen(true); }}
@@ -190,7 +209,7 @@ export default function ManageRecipesPage() {
         </>
       )}
 
-      {/* DYNAMIC DETAIL MODAL (Showing Ingredients & Instructions Side-by-Side) */}
+      {/* DYNAMIC DETAIL MODAL */}
       {selectedRecipe && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4" onClick={() => setSelectedRecipe(null)}>
           <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -207,7 +226,6 @@ export default function ManageRecipesPage() {
               <div>Rating Score: <span className="text-orange-500 ml-1">★ {selectedRecipe.rating || 5.0}</span></div>
             </div>
 
-            {/* List Ingredients */}
             <div className="space-y-3">
               <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Ingredients</h4>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -219,7 +237,6 @@ export default function ManageRecipesPage() {
               </ul>
             </div>
 
-            {/* 🛠️ NEW: List Step-by-Step Instructions */}
             <div className="space-y-3 pt-2">
               <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Step-by-Step Instructions</h4>
               {selectedRecipe.procedure && selectedRecipe.procedure.length > 0 ? (
@@ -236,11 +253,9 @@ export default function ManageRecipesPage() {
                   ))}
                 </ol>
               ) : (
-                <p className="text-xs font-bold text-gray-400 italic">No preparation steps specified for this recipe.</p>
+                <p className="text-xs font-bold text-gray-400 italic">No preparation steps specified.</p>
               )}
             </div>
-
-            <div className="text-[10px] text-gray-400 font-mono">Created by: {selectedRecipe.createdBy}</div>
           </div>
         </div>
       )}
@@ -267,7 +282,6 @@ export default function ManageRecipesPage() {
                 <textarea name="ingredients" rows={4} placeholder="e.g., 3.5 cups Flour&#10;1 tsp Yeast" onChange={formik.handleChange} value={formik.values.ingredients} className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold resize-none text-gray-900 dark:text-white" />
               </div>
 
-              {/* 🛠️ NEW: STEP-BY-STEP INSTRUCTIONS ENTRY WORKSPACE */}
               <div>
                 <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 px-1">Step-by-Step Instructions (one step per line)</label>
                 <textarea 
