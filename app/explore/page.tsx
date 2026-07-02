@@ -193,7 +193,7 @@ function ExploreContent() {
 // Next.js searchParams requirement wrapper
 export default function ExplorePage() {
   return (
-    <Suspense fallback={<div className="text-center py-20 text-gray-400">Loading Explore Panel...</div>}>
+    <Suspense fallback={<div>Loading Explore Panel...</div>}>
       <ExploreContent />
     </Suspense>
   );
