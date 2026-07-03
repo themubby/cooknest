@@ -237,6 +237,8 @@ export default function ManageRecipesPage() {
               </ul>
             </div>
 
+            {/* wagwan */}
+
             <div className="space-y-3 pt-2">
               <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Step-by-Step Instructions</h4>
               {selectedRecipe.procedure && selectedRecipe.procedure.length > 0 ? (
