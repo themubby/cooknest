@@ -7,10 +7,10 @@ import { db } from '@/config/firebase';
 
 // Category Definitions mapping matching your workspace cases exactly
 const CATEGORIES_DATA = [
-  { id: 1, name: 'Breakfast', query: 'Breakfast', icon: '🍳', bgClass: 'bg-orange-500/10 hover:bg-orange-500/20 text-orange-600' },
-  { id: 2, name: 'Lunch & Mains', query: 'Lunch', icon: '🍲', bgClass: 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-600' },
-  { id: 3, name: 'Dinner', query: 'Dinner', icon: '🍽️', bgClass: 'bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600' },
-  { id: 4, name: 'Desserts', query: 'Desserts', icon: '🍰', bgClass: 'bg-lime-500/10 hover:bg-lime-500/20 text-lime-600' },
+  { id: 1, name: 'Breakfast', query: 'Breakfast', icon: '🍳', bgClass: 'bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400' },
+  { id: 2, name: 'Lunch & Mains', query: 'Lunch', icon: '🍲', bgClass: 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400' },
+  { id: 3, name: 'Dinner', query: 'Dinner', icon: '🍽️', bgClass: 'bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' },
+  { id: 4, name: 'Desserts', query: 'Desserts', icon: '🍰', bgClass: 'bg-lime-500/10 hover:bg-lime-500/20 text-lime-600 dark:text-lime-400' },
 ];
 
 interface Recipe {
@@ -178,7 +178,7 @@ function PublicRecipesContent() {
                 <h2 className="text-2xl font-black text-gray-900 dark:text-white">{selectedRecipe.title}</h2>
                 <p className="text-xs text-gray-400 font-bold">Document owner: {selectedRecipe.authorName}</p>
               </div>
-              <button onClick={() => setSelectedRecipe(null)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 flex items-center justify-center font-bold text-xs cursor-pointer">✕</button>
+              <button onClick={() => setSelectedRecipe(null)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 flex items-center justify-center font-bold text-xs cursor-pointer dark:text-gray-400">✕</button>
             </div>
 
             <div className="flex gap-6 border-y border-gray-100 dark:border-gray-800 py-3 text-xs font-bold text-gray-400">

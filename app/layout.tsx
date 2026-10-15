@@ -2,6 +2,7 @@
 import React from 'react';
 import "@/app/globals.css"; // Your Tailwind input stylesheet
 import { ThemeProvider } from "@/components/theme-provider";
+import { Providers } from "@/components/provider";
 
 export default function RootLayout({
   children,
@@ -17,7 +18,8 @@ export default function RootLayout({
           defaultTheme="light"
           enableSystem={true}
         >
-          {children}
+          {/* SessionProvider for every page, so useSession works on public pages too */}
+          <Providers>{children}</Providers>
         </ThemeProvider>
       </body>
     </html>

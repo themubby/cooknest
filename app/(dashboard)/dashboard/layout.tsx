@@ -4,6 +4,7 @@ import SidebarNav from '@/components/dashboard/sidebar-nav';
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
 import { Providers } from "@/components/provider";
+import { getChefProfile } from "@/lib/profile";
 
 export default async function DashboardLayout({
   children,
@@ -16,11 +17,13 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // 📦 Format a safe user object to satisfy Navbar's required properties
+  // Latest saved name/avatar from Firestore (falls back to the sign-in values)
+  const profile = await getChefProfile(session.user.email, session.user);
+
   const safeUser = {
-    name: session.user.name || 'CookNest Chef',
+    name: profile.name,
     email: session.user.email || '',
-    image: session.user.image || undefined,
+    image: profile.image,
   };
 
   return (
@@ -40,13 +43,13 @@ export default async function DashboardLayout({
               {/* Minimal Mini-Profile Display */}
               <div className="flex items-center gap-3 px-2">
                 <img
-                  src={session.user.image || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'}
+                  src={profile.image || '/avatar-placeholder.svg'}
                   alt="Avatar"
                   className="h-10 w-10 rounded-full object-cover border border-orange-500/20 shadow-sm"
                 />
                 <div className="leading-tight">
                   <p className="text-sm font-bold text-gray-900 dark:text-white truncate max-w-35">
-                    {session.user.name || 'Chef'}
+                    {profile.name}
                   </p>
                   <span className="text-[11px] text-orange-500 font-bold bg-orange-50 dark:bg-orange-950/30 px-1.5 py-0.5 rounded">
                     Master Chef

@@ -6,13 +6,15 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import FavoriteButton from '@/components/favorite-button';
+import { useFavorites } from '@/lib/use-favorites';
 
 // Category Definitions matching workspace choices
 const CATEGORIES_DATA = [
-  { id: 1, name: 'Breakfast', query: 'Breakfast', icon: '🍳', bgClass: 'bg-orange-500/10 hover:bg-orange-500/20 text-orange-600' },
-  { id: 2, name: 'Lunch & Mains', query: 'Lunch', icon: '🍲', bgClass: 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-600' },
-  { id: 3, name: 'Dinner', query: 'Dinner', icon: '🍽️', bgClass: 'bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600' },
-  { id: 4, name: 'Desserts', query: 'Desserts', icon: '🍰', bgClass: 'bg-lime-500/10 hover:bg-lime-500/20 text-lime-600' },
+  { id: 1, name: 'Breakfast', query: 'Breakfast', icon: '🍳', bgClass: 'bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400' },
+  { id: 2, name: 'Lunch & Mains', query: 'Lunch', icon: '🍲', bgClass: 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400' },
+  { id: 3, name: 'Dinner', query: 'Dinner', icon: '🍽️', bgClass: 'bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' },
+  { id: 4, name: 'Desserts', query: 'Desserts', icon: '🍰', bgClass: 'bg-lime-500/10 hover:bg-lime-500/20 text-lime-600 dark:text-lime-400' },
 ];
 
 interface Recipe {
@@ -33,7 +35,14 @@ function PublicRecipesContent() {
   const activeCategory = searchParams.get('category');
   
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const { favoriteIds, toggleFavorite, signedIn } = useFavorites();
+  const urlSearch = searchParams.get('search') ?? '';
+  const [searchQuery, setSearchQuery] = useState(urlSearch);
+
+  // Keep the box in sync when a search is submitted from the navbar
+  useEffect(() => {
+    setSearchQuery(urlSearch);
+  }, [urlSearch]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
@@ -102,7 +111,7 @@ function PublicRecipesContent() {
         </p>
         <div className="pt-2">
           <Link 
-            href={session ? "/dashboard/recipes" : "/api/auth/signin"} 
+            href={session ? "/dashboard/manage" : "/login"} 
             className="inline-flex items-center justify-center bg-orange-500 text-white font-black text-xs uppercase tracking-wider px-8 py-3.5 rounded-full hover:bg-orange-600 transition-all shadow-sm active:scale-[0.98]"
           >
             {session ? "Open Your Workspace" : "Get Started Free"}
@@ -177,7 +186,15 @@ function PublicRecipesContent() {
                   className="p-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-4xl hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
                 >
                   <div className="space-y-2">
-                    <span className="px-3 py-1 bg-orange-50 dark:bg-orange-950/30 text-orange-500 rounded-full text-[10px] font-black uppercase tracking-wider">{item.category}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="px-3 py-1 bg-orange-50 dark:bg-orange-950/30 text-orange-500 rounded-full text-[10px] font-black uppercase tracking-wider">{item.category}</span>
+                      <FavoriteButton
+                        active={favoriteIds.has(item.id)}
+                        signedIn={signedIn}
+                        onToggle={() => toggleFavorite(item.id)}
+                        className="border border-gray-100 dark:border-gray-800"
+                      />
+                    </div>
                     <h3 className="font-extrabold text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors pt-1">{item.title}</h3>
                     <div className="flex items-center gap-4 text-xs font-bold text-gray-400">
                       <span>⏱️ {item.duration}</span>
@@ -211,11 +228,23 @@ function PublicRecipesContent() {
                     navigator.clipboard.writeText(`${window.location.origin}/recipes?category=${selectedRecipe.category}`);
                     alert("Category link copied to clipboard! 📋");
                   }}
-                  className="px-3 py-1.5 bg-gray-50 dark:bg-gray-800 text-gray-500 hover:text-orange-500 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors cursor-pointer"
+                  className="px-3 py-1.5 bg-gray-50 dark:bg-gray-800 text-gray-500 hover:text-orange-500 rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors cursor-pointer dark:text-gray-400"
                 >
                   🔗 Share Section
                 </button>
-                <button onClick={() => setSelectedRecipe(null)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 flex items-center justify-center font-bold text-xs cursor-pointer">✕</button>
+                <FavoriteButton
+                  active={favoriteIds.has(selectedRecipe.id)}
+                  signedIn={signedIn}
+                  onToggle={() => toggleFavorite(selectedRecipe.id)}
+                  className="border border-gray-100 dark:border-gray-800"
+                />
+                <Link
+                  href={`/recipes/${selectedRecipe.id}`}
+                  className="px-3 py-1.5 bg-orange-50 dark:bg-orange-950/30 text-orange-500 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-orange-100 transition-colors"
+                >
+                  Open Page
+                </Link>
+                <button onClick={() => setSelectedRecipe(null)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 flex items-center justify-center font-bold text-xs cursor-pointer dark:text-gray-400">✕</button>
               </div>
             </div>
 

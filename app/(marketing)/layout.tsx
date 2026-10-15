@@ -11,18 +11,14 @@ export default async function MarketingLayout({
   // 1. Fetch the session (will be null if they are a logged-out guest)
   const session = await auth();
 
-  // 2. Build a safe structure to satisfy your Navbar's strict type requirement
-  const safeUser = session?.user 
+  // 2. Signed-in users get a user object; guests get null so the navbar shows "Sign In"
+  const safeUser = session?.user
     ? {
         name: session.user.name || 'CookNest Chef',
         email: session.user.email || '',
         image: session.user.image || undefined,
       }
-    : {
-        name: 'Guest',
-        email: '',
-        image: undefined,
-      };
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

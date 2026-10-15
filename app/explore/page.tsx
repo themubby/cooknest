@@ -143,7 +143,7 @@ function ExploreContent() {
               </div>
               <button 
                 onClick={() => setSelectedRecipe(null)} 
-                className="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-500 flex items-center justify-center font-bold text-xs cursor-pointer hover:bg-gray-100"
+                className="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-500 flex items-center justify-center font-bold text-xs cursor-pointer hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
               >
                 ✕
               </button>

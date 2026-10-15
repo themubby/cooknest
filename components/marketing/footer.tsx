@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-white border-t border-border mt-auto text-text">
+    <footer className="w-full bg-white border-t border-border mt-auto text-text dark:bg-gray-900">
       {/* Top Main Section: Brand Context, Links Matrix, & News Gating */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8">
         
@@ -12,7 +12,7 @@ export default function Footer() {
             <img 
               src="/image/logo.png" 
               alt="CookNest Logo" 
-              className="h-30 w-auto object-contain" 
+              className="h-30 w-auto object-contain dark:rounded-2xl dark:bg-gray-100" 
               loading="lazy"
             />
           </a>
@@ -55,7 +55,7 @@ export default function Footer() {
               name="email"
               placeholder="Enter your email address"
               required
-              className="bg-background border border-border rounded-full px-1.5 py-2.5 text-sm w-full focus:outline-none focus:border-primary focus:bg-white transition-all text-text"
+              className="bg-background border border-border rounded-full px-1.5 py-2.5 text-sm w-full focus:outline-none focus:border-primary focus:bg-surface transition-all text-text"
             />
             <button 
               type="submit" 

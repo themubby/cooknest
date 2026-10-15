@@ -82,7 +82,7 @@ export default function RecipeFeed() {
         {RECIPES_DATA.map((recipe) => (
           <article 
             key={recipe.id} 
-            className="group bg-white rounded-3xl overflow-hidden border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full"
+            className="group bg-white rounded-3xl overflow-hidden border border-border/50 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full dark:bg-gray-900"
           >
             {/* Aspect Frame Image Wrapper */}
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-background">
@@ -93,7 +93,7 @@ export default function RecipeFeed() {
                 loading="lazy"
               />
               {/* Category Floating Pill Indicator */}
-              <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-md text-[11px] font-bold px-3 py-1 rounded-full text-text shadow-sm border border-white/20">
+              <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-md text-[11px] font-bold px-3 py-1 rounded-full text-text shadow-sm border border-white/20 dark:bg-gray-900/90">
                 {recipe.category}
               </span>
             </div>
@@ -111,7 +111,7 @@ export default function RecipeFeed() {
               </div>
 
               {/* Dynamic Recipe Title Link */}
-              <a href={`/recipes/${recipe.id}`} className="block group-hover:text-primary transition-colors duration-200">
+              <a href="/recipes" className="block group-hover:text-primary transition-colors duration-200">
                 <h3 className="text-lg font-bold text-text tracking-tight leading-snug line-clamp-2 min-h-[3.5rem]">
                   {recipe.title}
                 </h3>

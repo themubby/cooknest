@@ -34,6 +34,15 @@ export default function ManageRecipesPage() {
   const searchParams = useSearchParams();
   const currentSearchQuery = searchParams.get("search")?.toLowerCase() || "";
 
+  // "New Recipe" links elsewhere in the app open this page with ?new=1 to start the add form
+  const wantsNewRecipe = searchParams.get("new") === "1";
+  useEffect(() => {
+    if (wantsNewRecipe) {
+      setEditingRecipe(null);
+      setIsFormOpen(true);
+    }
+  }, [wantsNewRecipe]);
+
   // ⚡ DYNAMICALLY FILTER ONLY USER RECIPES ON THE FLY
   const filteredRecipes = recipes.filter(recipe => 
     recipe.title.toLowerCase().includes(currentSearchQuery)
@@ -163,7 +172,9 @@ export default function ManageRecipesPage() {
         <>
           {filteredRecipes.length === 0 && (
             <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-[2rem]">
-              <p className="text-sm font-bold text-gray-400">No personal recipes found "{currentSearchQuery}"</p>
+              <p className="text-sm font-bold text-gray-400">
+                {currentSearchQuery ? `No personal recipes found for "${currentSearchQuery}"` : "You haven't added any recipes yet. Press Add Private Recipe to start."}
+              </p>
             </div>
           )}
 
@@ -177,7 +188,7 @@ export default function ManageRecipesPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <span className="px-3 py-1 bg-orange-50 dark:bg-orange-950/30 text-orange-500 rounded-full text-[10px] font-black uppercase tracking-wider">{item.category}</span>
-                    <span className="text-[10px] bg-green-50 dark:bg-green-950/30 text-green-600 font-bold px-2 py-0.5 rounded-md">
+                    <span className="text-[10px] bg-green-50 dark:bg-green-950/30 text-green-600 font-bold px-2 py-0.5 rounded-md dark:text-green-400">
                       {item.isPublic ? "🌐 Public Feed" : "🔒 Private"}
                     </span>
                   </div>
@@ -218,10 +229,10 @@ export default function ManageRecipesPage() {
                 <span className="text-[10px] font-black tracking-widest text-orange-500 uppercase">{selectedRecipe.category}</span>
                 <h2 className="text-2xl font-black text-gray-900 dark:text-white">{selectedRecipe.title}</h2>
               </div>
-              <button onClick={() => setSelectedRecipe(null)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 flex items-center justify-center font-bold text-xs cursor-pointer">✕</button>
+              <button onClick={() => setSelectedRecipe(null)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 flex items-center justify-center font-bold text-xs cursor-pointer dark:text-gray-400">✕</button>
             </div>
 
-            <div className="flex gap-6 border-y border-gray-100 dark:border-gray-800 py-3 text-xs font-bold text-gray-500">
+            <div className="flex gap-6 border-y border-gray-100 dark:border-gray-800 py-3 text-xs font-bold text-gray-500 dark:text-gray-400">
               <div>Cooking Duration: <span className="text-gray-900 dark:text-white ml-1">⏱️ {selectedRecipe.duration}</span></div>
               <div>Rating Score: <span className="text-orange-500 ml-1">★ {selectedRecipe.rating || 5.0}</span></div>
             </div>
@@ -236,8 +247,6 @@ export default function ManageRecipesPage() {
                 ))}
               </ul>
             </div>
-
-            {/* wagwan */}
 
             <div className="space-y-3 pt-2">
               <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider">Step-by-Step Instructions</h4>
@@ -297,7 +306,7 @@ export default function ManageRecipesPage() {
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setIsFormOpen(false)} className="px-5 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-full font-bold text-xs text-gray-500 cursor-pointer">Cancel</button>
+                <button type="button" onClick={() => setIsFormOpen(false)} className="px-5 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-full font-bold text-xs text-gray-500 cursor-pointer dark:text-gray-400">Cancel</button>
                 <button type="submit" className="px-6 py-2.5 bg-orange-500 text-white rounded-full font-bold text-xs cursor-pointer hover:bg-orange-600">Save</button>
               </div>
             </form>

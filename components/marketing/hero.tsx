@@ -24,7 +24,7 @@ export default function Hero() {
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 w-full">
           {/* Main Workspace Trigger */}
           <Link 
-            href="/dashboard/recipes" 
+            href="/dashboard/manage" 
             className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white text-center font-black text-xs uppercase tracking-wider px-8 py-4 rounded-full shadow-md transition-all whitespace-nowrap"
           >
             Go to Kitchen Workspace

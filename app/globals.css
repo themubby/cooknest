@@ -1,17 +1,44 @@
 @import "tailwindcss";
-@variant dark (&:where(.dark, .dark *));
 
-@theme {
-  /* Set Poppins as the default sans-serif font */
+/* Class-based dark mode: next-themes adds/removes the "dark" class on <html>.
+   (Tailwind v4 needs @custom-variant for this; plain @variant does not do it.) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Light and dark values for the CookNest colour tokens */
+:root {
+  --background: #FFFDF8;
+  --surface: #FFFFFF;
+  --text: #1F2937;
+  --muted: #6B7280;
+  --border: #E5E7EB;
+}
+
+.dark {
+  --background: #030712;
+  --surface: #111827;
+  --text: #F3F4F6;
+  --muted: #9CA3AF;
+  --border: #1F2937;
+}
+
+/* "inline" makes utilities such as bg-background read the variables above at runtime,
+   so they switch automatically when the .dark class is on <html>. */
+@theme inline {
   --font-sans: "Poppins", sans-serif;
 
-  /* Your CookNest App Color Palette */
-  --color-background: #FFFDF8;
-  --color-surface: #FFFFFF;
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  /* Brand colours stay the same in both themes */
   --color-primary: #F97316;
   --color-secondary: #F59E0B;
   --color-accent: #84CC16;
-  --color-text: #1F2937;
-  --color-muted: #6B7280;
-  --color-border: #E5E7EB;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
 }

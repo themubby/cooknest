@@ -1,52 +1,78 @@
 "use server";
 
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { AuthError } from "next-auth";
+import { doc, getDoc, getDocs, collection, query, where, setDoc } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import { signIn } from "@/auth";
+import { hashPassword } from "@/lib/password";
 
-export async function registerManualUser(formData: FormData) {
+export type SignupState = { error?: string } | undefined;
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export async function registerManualUser(
+  _prevState: SignupState,
+  formData: FormData
+): Promise<SignupState> {
   const name = formData.get("name")?.toString().trim();
   const email = formData.get("email")?.toString().trim().toLowerCase();
   const phone = formData.get("phone")?.toString().trim();
   const password = formData.get("password")?.toString();
 
   if (!name || !email || !phone || !password) {
-    throw new Error("All fields are strictly required.");
+    return { error: "Please fill in every field." };
+  }
+  if (!EMAIL_PATTERN.test(email)) {
+    return { error: "Please enter a valid email address." };
+  }
+  if (password.length < 8) {
+    return { error: "Your password must be at least 8 characters long." };
   }
 
   try {
-    // 1. CHECK IF USER ALREADY EXISTS IN FIRESTORE
-    const usersRef = collection(db, "users");
-    const existingUserQuery = query(usersRef, where("email", "==", email));
-    const querySnapshot = await getDocs(existingUserQuery);
+    // 1. Reject duplicates (covers old auto-id documents and email-keyed ones)
+    const existing = await getDocs(
+      query(collection(db, "users"), where("email", "==", email))
+    );
+    const keyedDoc = await getDoc(doc(db, "users", email));
+    const alreadyHasAccount =
+      existing.docs.some((d) => d.data().passwordHash || d.data().password) ||
+      (keyedDoc.exists() && !!(keyedDoc.data().passwordHash || keyedDoc.data().password));
 
-    if (!querySnapshot.empty) {
-      throw new Error("This email address is already registered.");
+    if (alreadyHasAccount) {
+      return { error: "This email address is already registered. Try logging in." };
     }
 
-    // 2. LIVE WRITE TO FIRESTORE
-    // Note: For a true live production system, hash this password (e.g., using bcryptjs) 
-    // before saving it into Firestore to protect user credentials.
-    await addDoc(usersRef, {
-      name,
-      email,
-      phone,
-      password: password, // Store hashed version here in production
-      createdAt: new Date().toISOString(),
-      provider: "credentials"
-    });
+    // 2. One document per user, keyed by email, password stored as a bcrypt hash.
+    //    merge:true keeps any profile fields if a Google user later adds a password.
+    await setDoc(
+      doc(db, "users", email),
+      {
+        name,
+        email,
+        phone,
+        passwordHash: await hashPassword(password),
+        createdAt: new Date().toISOString(),
+        provider: "credentials",
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.error("Registration failure:", error);
+    return { error: "We couldn't create your account right now. Please try again." };
+  }
 
-    console.log(`Successfully recorded manual chef account in cloud ledger: ${email}`);
-
-    // 3. HANDSHAKE WITH NEXTAUTH CREDENTIALS PROVIDER FOR AUTOMATIC LOGIN
-    await signIn("credentials", {
-      email,
-      password,
-      redirectTo: "/dashboard",
-    });
-
-  } catch (error: any) {
-    console.error("Manual Registration Failure Root: ", error.message);
+  // 3. Sign the new user in. Success throws a redirect that must propagate.
+  try {
+    await signIn("credentials", { email, password, redirectTo: "/dashboard" });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return {
+        error: "Your account was created, but automatic sign-in failed. Please log in.",
+      };
+    }
     throw error;
   }
+
+  return undefined;
 }
