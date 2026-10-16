@@ -7,6 +7,7 @@ import { collection, getDocs, getDoc, doc, updateDoc, deleteDoc, query, where } 
 import { db } from "@/config/firebase";
 import { useFormik } from "formik";
 import FavoriteButton from "@/components/favorite-button";
+import RecipeThumb from "@/components/recipe-thumb";
 import { getFavoriteIds } from "@/lib/favorites";
 import { useFavorites } from "@/lib/use-favorites";
 
@@ -22,8 +23,6 @@ interface Recipe {
 }
 
 const FILTERS = ["All", "Breakfast", "Lunch", "Dinner", "Desserts", "Favorites"];
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&q=80&w=300";
 
 function toRecipe(id: string, data: Record<string, any>): Recipe {
   return {
@@ -34,7 +33,7 @@ function toRecipe(id: string, data: Record<string, any>): Recipe {
     rating: data.rating || 5.0,
     ingredients: data.ingredients || [],
     createdBy: data.createdBy || "",
-    image: data.image || FALLBACK_IMAGE,
+    image: data.image || undefined,
   };
 }
 
@@ -185,9 +184,9 @@ export default function CategoryPage() {
                 key={recipeItem.id}
                 className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[2rem] overflow-hidden shadow-sm flex flex-col relative"
               >
-                <div className="relative aspect-square w-full bg-gray-50 dark:bg-gray-950">
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-50 dark:bg-gray-950">
                   <a href={`/recipes/${recipeItem.id}`}>
-                    <img src={recipeItem.image} alt={recipeItem.title} className="w-full h-full object-cover" />
+                    <RecipeThumb category={recipeItem.category} image={recipeItem.image} title={recipeItem.title} />
                   </a>
                   <div className="absolute top-3 right-3">
                     <FavoriteButton

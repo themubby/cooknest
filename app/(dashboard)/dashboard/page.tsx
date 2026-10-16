@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import { getChefProfile } from "@/lib/profile";
+import RecipeThumb from "@/components/recipe-thumb";
 
 interface RecentRecipe {
   id: string;
@@ -120,8 +121,8 @@ export default async function DashboardPage() {
             recentRecipes.map((recipe) => (
               <div key={recipe.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                 <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0 flex items-center justify-center text-xl dark:bg-gray-800 dark:border-gray-800">
-                    🍲
+                  <div className="h-14 w-14 rounded-2xl overflow-hidden shrink-0">
+                    <RecipeThumb category={recipe.category} title={recipe.title} size="small" />
                   </div>
                   <div>
                     <a

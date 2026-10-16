@@ -11,8 +11,19 @@ export default function SidebarNav({ isMobileHorizontal = false }: SidebarNavPro
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const currentSearch = searchParams.toString() ? `?${searchParams.toString()}` : '';
-  const fullCurrentPath = pathname + currentSearch;
+  const currentFilter = searchParams.get('filter');
+
+  // An item is active when its page matches AND, for items that point at a filtered tab
+  // (Favorites), the filter matches too. "Categories" is not active while Favorites is open.
+  const isItemActive = (itemPath: string) => {
+    const [basePath, query] = itemPath.split('?');
+    if (pathname !== basePath) return false;
+
+    const itemFilter = new URLSearchParams(query ?? '').get('filter');
+    if (itemFilter) return currentFilter === itemFilter;
+    if (basePath === '/dashboard/category') return currentFilter !== 'Favorites';
+    return true;
+  };
 
   const navItems = [
     { path: "/dashboard", label: "Home", icon: "🏠" },
@@ -29,7 +40,7 @@ export default function SidebarNav({ isMobileHorizontal = false }: SidebarNavPro
   return (
     <nav className={containerClasses}>
       {navItems.map((item) => {
-        const isActive = pathname === item.path || fullCurrentPath === item.path;
+        const isActive = isItemActive(item.path);
 
         return (
           <a
