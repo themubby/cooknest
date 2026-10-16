@@ -98,13 +98,23 @@ export default function ManageRecipesPage() {
       procedure: editingRecipe?.procedure.join('\n') || '',
     },
     enableReinitialize: true,
+    validate: (values) => {
+      const errors: Record<string, string> = {};
+      const lines = (text: string) => text.split('\n').map(l => l.trim()).filter(Boolean);
+      if (!values.title.trim()) errors.title = 'Please enter a recipe title.';
+      if (!values.duration.trim()) errors.duration = 'Please enter a cooking time.';
+      if (lines(values.ingredients).length === 0) errors.ingredients = 'Add at least one ingredient.';
+      if (lines(values.procedure).length === 0) errors.procedure = 'Add at least one instruction step.';
+      return errors;
+    },
     onSubmit: async (values, { resetForm }) => {
+      const cleanLines = (text: string) => text.split('\n').map(l => l.trim()).filter(Boolean);
       const payload = {
-        title: values.title,
-        duration: values.duration,
+        title: values.title.trim(),
+        duration: values.duration.trim(),
         category: values.category,
-        ingredients: values.ingredients.split('\n').filter(i => i.trim() !== ''),
-        procedure: values.procedure.split('\n').filter(p => p.trim() !== ''),
+        ingredients: cleanLines(values.ingredients),
+        procedure: cleanLines(values.procedure),
         rating: editingRecipe?.rating || 5.0,
         createdBy: session?.user?.email || "anonymous",
         authorName: session?.user?.name || "CookNest Chef",
@@ -276,10 +286,11 @@ export default function ManageRecipesPage() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-900 rounded-4xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-black text-gray-900 dark:text-white">{editingRecipe ? "Edit Recipe" : "Add Masterpiece"}</h2>
-            <form onSubmit={formik.handleSubmit} className="space-y-4">
-              <input name="title" type="text" placeholder="Recipe Title" required onChange={formik.handleChange} value={formik.values.title} className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold text-gray-900 dark:text-white" />
+            <form onSubmit={formik.handleSubmit} noValidate className="space-y-4">
+              <input name="title" type="text" placeholder="Recipe Title" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.title} className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold text-gray-900 dark:text-white" />
+              {formik.submitCount > 0 && formik.errors.title && <p role="alert" className="text-xs font-bold text-red-600 dark:text-red-400 px-1">{formik.errors.title}</p>}
               <div className="grid grid-cols-2 gap-4">
-                <input name="duration" type="text" placeholder="e.g., 45 mins" required onChange={formik.handleChange} value={formik.values.duration} className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold text-gray-900 dark:text-white" />
+                <input name="duration" type="text" placeholder="e.g., 45 mins" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.duration} className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold text-gray-900 dark:text-white" />
                 <select name="category" onChange={formik.handleChange} value={formik.values.category} className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold text-gray-900 dark:text-white">
                   <option value="Breakfast">Breakfast</option>
                   <option value="Lunch">Lunch</option>
@@ -287,10 +298,12 @@ export default function ManageRecipesPage() {
                   <option value="Desserts">Desserts</option>
                 </select>
               </div>
+              {formik.submitCount > 0 && formik.errors.duration && <p role="alert" className="text-xs font-bold text-red-600 dark:text-red-400 px-1">{formik.errors.duration}</p>}
               
               <div>
                 <label className="block text-[10px] font-black uppercase text-gray-400 mb-1 px-1">Ingredients (one per line)</label>
-                <textarea name="ingredients" rows={4} placeholder="e.g., 3.5 cups Flour&#10;1 tsp Yeast" onChange={formik.handleChange} value={formik.values.ingredients} className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold resize-none text-gray-900 dark:text-white" />
+                <textarea name="ingredients" rows={4} placeholder="e.g., 3.5 cups Flour&#10;1 tsp Yeast" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.ingredients} className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold resize-none text-gray-900 dark:text-white" />
+                {formik.submitCount > 0 && formik.errors.ingredients && <p role="alert" className="text-xs font-bold text-red-600 dark:text-red-400 px-1">{formik.errors.ingredients}</p>}
               </div>
 
               <div>
@@ -300,9 +313,11 @@ export default function ManageRecipesPage() {
                   rows={5} 
                   placeholder="e.g., Mix dry ingredients in a large bowl.&#10;Cover tightly and rise for 3 hours." 
                   onChange={formik.handleChange} 
+                  onBlur={formik.handleBlur}
                   value={formik.values.procedure} 
                   className="w-full px-4 py-3 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-gray-950 text-sm font-bold resize-none text-gray-900 dark:text-white focus:outline-none focus:border-orange-500 transition-colors" 
                 />
+                {formik.submitCount > 0 && formik.errors.procedure && <p role="alert" className="text-xs font-bold text-red-600 dark:text-red-400 px-1">{formik.errors.procedure}</p>}
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
