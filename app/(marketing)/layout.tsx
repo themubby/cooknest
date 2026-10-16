@@ -2,6 +2,7 @@ import React from 'react';
 import Navbar from "@/components/marketing/navbar";
 import Footer from "@/components/marketing/footer";
 import { auth } from "@/auth";
+import { getChefProfile } from "@/lib/profile";
 
 export default async function MarketingLayout({
   children,
@@ -12,11 +13,16 @@ export default async function MarketingLayout({
   const session = await auth();
 
   // 2. Signed-in users get a user object; guests get null so the navbar shows "Sign In"
-  const safeUser = session?.user
+  // Read the latest name/photo saved on the Profile page (the session only has sign-in-time values)
+  const profile = session?.user
+    ? await getChefProfile(session.user.email, session.user)
+    : null;
+
+  const safeUser = session?.user && profile
     ? {
-        name: session.user.name || 'CookNest Chef',
+        name: profile.name,
         email: session.user.email || '',
-        image: session.user.image || undefined,
+        image: profile.image,
       }
     : null;
 
